@@ -92,15 +92,19 @@ class GANAuxModel(BaseModel):
         
     def disc_loss(self, real, fake, style, mult = 1.0):
         loss = 0.0
-        for i in range(style.shape[0]):
-            preds = self.netD([real, style[i:i+1]])
-            preds_fake = self.netD([fake, style[i:i+1]])
-            subloss = 0.0
-            for i in range(len(preds)):
-                pred = preds[i]
-                pred_fake = preds_fake[i]
-                subloss += (torch.mean((pred - torch.mean(pred_fake) - mult * torch.ones_like(pred)) ** 2) + torch.mean((pred_fake - torch.mean(pred) + mult * torch.ones_like(pred)) ** 2)) / 2.0
-            loss += (subloss / len(preds))
+        # the real shape is  Bitch_size*C*W*H, style shape is Bitch_size*C*W*H, style[i:i+1] shape is 1*C*w*H, however real shape is B*C*H*W,They have different shapes 
+        #unable to run  self.netD(),so Remove the for
+        #for i in range(style.shape[0]):
+        #    preds = self.netD([real, style[i:i+1]])
+        #    preds_fake = self.netD([fake, style[i:i+1]])
+        preds = self.netD([real, style])
+        preds_fake = self.netD([fake, style])
+        subloss = 0.0
+        for i in range(len(preds)):
+            pred = preds[i]
+            pred_fake = preds_fake[i]
+            subloss += (torch.mean((pred - torch.mean(pred_fake) - mult * torch.ones_like(pred)) ** 2) + torch.mean((pred_fake - torch.mean(pred) + mult * torch.ones_like(pred)) ** 2)) / 2.0
+        loss += (subloss / len(preds))
         loss /= style.shape[0]
         return loss
         
